@@ -7,7 +7,13 @@ authors = [
     { name = "ItsJavadHosseini", email = "javadhossiniytr@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.3",
+    "pandas>=3.0.5",
+    "torch>=2.14.0",
+    "torchvision>=0.29.0",
+]
 
 [project.scripts]
 traffic-vehicle-classification = "traffic_vehicle_classification:main"
@@ -15,3 +21,9 @@ traffic-vehicle-classification = "traffic_vehicle_classification:main"
 [build-system]
 requires = ["uv_build>=0.12.13,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+notebook = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+]

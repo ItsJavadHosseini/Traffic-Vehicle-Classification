@@ -8,3 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# large files
+*.rar
+**.rar
+
+*.jpg
+**.jpg
+***.jpg
+
+Project-Definition2-traffic-vehicle.ipynb
