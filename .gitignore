@@ -18,3 +18,8 @@ wheels/
 ***.jpg
 
 Project-Definition2-traffic-vehicle.ipynb
+*.ipunb
+**.ipynb
+
+*.json
+**.json
