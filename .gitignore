@@ -23,3 +23,5 @@ Project-Definition2-traffic-vehicle.ipynb
 
 *.json
 **.json
+.idea/
+
