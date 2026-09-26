@@ -12,8 +12,8 @@ import imagehash
 class VehicleDataset(Dataset):
     SUPPORTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".webp"]
     def __init__(self,root_dir,transform=None):
-        self.near_duplicates = None
-        self.exact_duplicates = None
+        #self.near_duplicates = None
+        #self.exact_duplicates = None
         self.root_dir = Path(root_dir)
         self.transform = transform
 
@@ -37,7 +37,7 @@ class VehicleDataset(Dataset):
         """
         Find Classes name from subdirectories.
         :param self:
-        :return:
+        :return: name of classes
         """
         classes = sorted(folder.name for folder in Path(self.root_dir).iterdir() if\
                             folder.is_dir())
@@ -46,9 +46,9 @@ class VehicleDataset(Dataset):
         return classes
     def _load_samples(self):
         """
-        Create a list of: (image_path, class_index)
+        Create a list of: (image_path, class_index) |
         :param self:
-        :return:
+        :return:image path ,class index
         """
         samples = []
         for class_name in self.classes:
@@ -231,6 +231,12 @@ class VehicleDataset(Dataset):
                     "laplacian_variance" : None,
                 })
         properties = pd.DataFrame(record)
+        if self._metadata is None:
+            self._metadata = self.build_metadata()
+        self._metadata = self._metadata.drop(
+            columns=["brightness", "laplacian_variance"],
+            errors="ignore"
+        )
         self._metadata = self.build_metadata().merge(
                 properties[
                 ["path", "brightness", "laplacian_variance"]
