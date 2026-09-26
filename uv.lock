@@ -2319,6 +2319,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "imagehash" },
+    { name = "ipykernel" },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "pandas" },
@@ -2338,6 +2339,7 @@ notebook = [
 [package.metadata]
 requires-dist = [
     { name = "imagehash" },
+    { name = "ipykernel", specifier = ">=7.3.0" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "numpy", specifier = ">=2.5.3" },
     { name = "pandas", specifier = ">=3.0.5" },
