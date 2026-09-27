@@ -138,16 +138,29 @@ class VehicleDataset(Dataset):
 
     def inspect_images(self):
         df = self.build_metadata()
-        print("Image Dimension")
-        print(
-            df[
-                ["width", "height"]
-            ].describe()
-        )
-        print(f"Channels: {df['channels'].value_counts()}")
-        print(f"Format: {df['format'].value_counts()}")
-        print(f"Filesize: {df['filesize'].value_counts()}")
-        print(f"Aspect Ratio: {df['aspect_ratio'].value_counts()}")
+
+        print("=== Image Dimensions ===")
+        print(df[["width", "height"]].describe())
+
+        print("\n=== Channels ===")
+        print(df["channels"].value_counts())
+
+        print("\n=== Format ===")
+        print(df["format"].value_counts())
+
+        print("\n=== File Size (bytes) ===")
+        print(df["filesize"].describe())
+
+        print("\n=== Aspect Ratio ===")
+        print(df["aspect_ratio"].describe())
+
+        plt.figure(figsize=(10, 5))
+        plt.hist(df["aspect_ratio"], bins=30)
+        plt.xlabel("Aspect Ratio (width / height)")
+        plt.ylabel("Number of Images")
+        plt.title("Aspect Ratio Distribution")
+        plt.show()
+
         return df
 
 # 6. Corrupted Images
