@@ -17,11 +17,12 @@ wheels/
 **.jpg
 ***.jpg
 
-Project-Definition2-traffic-vehicle.ipynb
-*.ipunb
+*.ipynb
 **.ipynb
+***.ipynb
 
 *.json
 **.json
 .idea/
 
+notebooks/
