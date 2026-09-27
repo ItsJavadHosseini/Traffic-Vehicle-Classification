@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 import imagehash
+from IPython.display import display
 
 class VehicleDataset(Dataset):
     SUPPORTED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".webp"]
@@ -308,6 +309,22 @@ class VehicleDataset(Dataset):
         self.near_duplicates = pd.DataFrame(duplicates)
         print(f"Near Duplicate files: {len(self.near_duplicates)}")
         return self.near_duplicates
+
+# 11.1 Display Duplicates
+    def display_duplicates(self, duplicate_type="near", n=20):
+        if duplicate_type == "exact":
+            data = self._exact_duplicates
+        elif duplicate_type == "near":
+            data = self._near_duplicates
+        else:
+            raise ValueError("duplicate_type must be 'exact' or 'near'")
+
+        if data is None or len(data) == 0:
+            print(f"No {duplicate_type} duplicates found.")
+            return
+
+        print(f"{duplicate_type.capitalize()} duplicates: {len(data)}")
+        display(data.head(n))
 
 # 12 . Suspicious Samples
 
