@@ -272,7 +272,7 @@ class VehicleDataset(Dataset):
         duplicates = (
             df[duplicate_mask].sort_values("md5").reset_index(drop=True)
         )
-        self.exact_duplicates = duplicates
+        self._exact_duplicates = duplicates
         print(f"Exact Duplicate files: {len(duplicates)}")
         return duplicates
 
@@ -306,26 +306,74 @@ class VehicleDataset(Dataset):
                         "label_2" : records[j]["label"],
                         "distance" : distance,
                     })
-        self.near_duplicates = pd.DataFrame(duplicates)
-        print(f"Near Duplicate files: {len(self.near_duplicates)}")
-        return self.near_duplicates
+        self._near_duplicates = pd.DataFrame(duplicates)
+        print(f"Near Duplicate files: {len(self._near_duplicates)}")
+        return self._near_duplicates
 
 # 11.1 Display Duplicates
-    def display_duplicates(self, duplicate_type="near", n=20):
+    def display_duplicates(
+            self,
+            duplicate_type="near",
+            n=20,
+            max_distance=None,
+            cross_class_only=False
+    ):
         if duplicate_type == "exact":
             data = self._exact_duplicates
         elif duplicate_type == "near":
             data = self._near_duplicates
         else:
-            raise ValueError("duplicate_type must be 'exact' or 'near'")
-
+            raise ValueError(
+                "duplicate_type must be 'exact' or 'near'"
+            )
         if data is None or len(data) == 0:
             print(f"No {duplicate_type} duplicates found.")
             return
-
-        print(f"{duplicate_type.capitalize()} duplicates: {len(data)}")
+        data = data.copy()
+        if max_distance is not None and "distance" in data.columns:
+            data = data[data["distance"] <= max_distance]
+        if cross_class_only and duplicate_type == "near":
+            data = data[data["label_1"] != data["label_2"]]
+        print(f"Showing {min(n, len(data))} of {len(data)} duplicates")
         display(data.head(n))
 
+# 11.2 Visualize Duplicate
+
+    def visualize_duplicate_pairs(
+            self,
+            n=10,
+            max_distance=None,
+            cross_class_only=False
+    ):
+        data = self._near_duplicates
+        if data is None or len(data) == 0:
+            print("No near duplicates found.")
+            return
+        data = data.copy()
+        if max_distance is not None:
+            data = data[data["distance"] <= max_distance]
+        if cross_class_only:
+            data = data[data["label_1"] != data["label_2"]]
+        data = data.head(n)
+        for _, row in data.iterrows():
+            image_1 = Image.open(row["path_1"]).convert("RGB")
+            image_2 = Image.open(row["path_2"]).convert("RGB")
+            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+            axes[0].imshow(image_1)
+            axes[0].set_title(
+                f'{row["label_1"]}\n{row["path_1"].split("/")[-1]}'
+            )
+            axes[0].axis("off")
+            axes[1].imshow(image_2)
+            axes[1].set_title(
+                f'{row["label_2"]}\n{row["path_2"].split("/")[-1]}'
+            )
+            axes[1].axis("off")
+            fig.suptitle(
+                f'Perceptual hash distance: {row["distance"]}'
+            )
+            plt.tight_layout()
+            plt.show()
 # 12 . Suspicious Samples
 
     def suspicious_samples(self, brightness_threshold=None, blur_threshold=None):
