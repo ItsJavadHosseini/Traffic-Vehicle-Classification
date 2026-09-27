@@ -341,7 +341,8 @@ class VehicleDataset(Dataset):
 
     def visualize_duplicate_pairs(
             self,
-            n=10,
+            page=1,
+            per_page=10,
             max_distance=None,
             cross_class_only=False
     ):
@@ -350,27 +351,55 @@ class VehicleDataset(Dataset):
             print("No near duplicates found.")
             return
         data = data.copy()
+        # Filter by distance
         if max_distance is not None:
             data = data[data["distance"] <= max_distance]
+        # Only different labels
         if cross_class_only:
             data = data[data["label_1"] != data["label_2"]]
-        data = data.head(n)
-        for _, row in data.iterrows():
+
+        total = len(data)
+
+        if total == 0:
+            print("No duplicates match the selected filters.")
+            return
+
+        # Number of pages
+        total_pages = (total + per_page - 1) // per_page
+
+        if page < 1 or page > total_pages:
+            print(f"Page must be between 1 and {total_pages}")
+            return
+        start = (page - 1) * per_page
+        end = start + per_page
+        page_data = data.iloc[start:end]
+        print(
+            f"Page {page}/{total_pages} | "
+            f"Pairs {start + 1}-{min(end, total)} | "
+            f"Total: {total}"
+        )
+        for pair_number, (_, row) in enumerate(
+                page_data.iterrows(),
+                start=start + 1
+        ):
             image_1 = Image.open(row["path_1"]).convert("RGB")
             image_2 = Image.open(row["path_2"]).convert("RGB")
-            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+            fig, axes = plt.subplots(1, 2, figsize=(10, 4))
             axes[0].imshow(image_1)
             axes[0].set_title(
-                f'{row["label_1"]}\n{row["path_1"].split("/")[-1]}'
+                f'{row["label_1"]}\n'
+                f'{Path(row["path_1"]).name}'
             )
             axes[0].axis("off")
             axes[1].imshow(image_2)
             axes[1].set_title(
-                f'{row["label_2"]}\n{row["path_2"].split("/")[-1]}'
+                f'{row["label_2"]}\n'
+                f'{Path(row["path_2"]).name}'
             )
             axes[1].axis("off")
             fig.suptitle(
-                f'Perceptual hash distance: {row["distance"]}'
+                f"Pair {pair_number} | "
+                f"Distance: {row['distance']}"
             )
             plt.tight_layout()
             plt.show()
