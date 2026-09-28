@@ -119,7 +119,7 @@ class VehicleSubset(Dataset):
 # Data Module
 # ============================================================
 
-class DataModule:
+class SGDataModule:
     """
     Manage the complete training/validation data pipeline.
 
