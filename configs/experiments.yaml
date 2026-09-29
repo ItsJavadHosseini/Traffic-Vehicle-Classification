@@ -1,0 +1,43 @@
+seed: 42
+
+dataset:
+  root_dir: "C:/Users/javad/Desktop/merged_dataset_v2/merged_dataset_v2/train"
+
+split:
+  val_size: 0.2
+  test_size: 0
+
+data:
+  batch_size: 32
+  image_size: [224, 224]
+  num_workers: 0
+
+training:
+  epochs: 15
+
+loss:
+  name: cross_entropy
+
+optimizer:
+  name: adamw
+  weight_decay: 0.0001
+
+model:
+  name: deep_baseline
+  dropout: 0.3
+
+search:
+  enabled: true
+  method: grid
+
+  parameters:
+    optimizer.lr:
+      - 0.0001
+      - 0.0003
+      - 0.0005
+
+    model.dropout:
+      - 0.2
+      - 0.3
+      - 0.5
+
