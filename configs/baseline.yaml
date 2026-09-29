@@ -1,0 +1,45 @@
+experiment:
+  name: baseline_cnn_v1
+  seed: 42
+  epochs: 30
+
+data:
+  image_size:
+    width: 224
+    height: 224
+
+  validation_size: 0.15
+
+  batch_size: 32
+
+  num_workers: 0
+
+  padding:
+    enabled: true
+
+    fill: 0
+
+augmentation:
+  enabled: false
+
+model:
+  name: baseline_cnn
+
+  dropout: 0.30
+
+optimizer:
+  name: adamw
+
+  learning_rate: 0.001
+
+  weight_decay: 0.0001
+
+loss:
+  name: cross_entropy
+
+checkpoint:
+  enabled: true
+
+  save_best_by: val_loss
+
+  path: artifacts/checkpoints/baseline_cnn_best.pt
