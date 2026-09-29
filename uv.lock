@@ -2331,6 +2331,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+dev = [
+    { name = "notebook" },
+]
 notebook = [
     { name = "ipykernel" },
     { name = "jupyter" },
@@ -2351,6 +2354,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+dev = [{ name = "notebook", specifier = ">=7.6.2" }]
 notebook = [
     { name = "ipykernel", specifier = ">=7.3.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
