@@ -1,7 +1,7 @@
 seed: 42
 
 dataset:
-  root_dir: "C:/Users/javad/Desktop/merged_dataset_v2/merged_dataset_v2/train"
+  root_dir: "D:/Desktop/datasetv2_TrainUclean/train"
 
 split:
   val_size: 0.2
