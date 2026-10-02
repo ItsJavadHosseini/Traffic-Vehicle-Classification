@@ -862,3 +862,20 @@ but rather:
 This establishes the baseline as a quantitative reference for the subsequent ResNet experiments.
 
 The transition to a pretrained model should therefore preserve the experimental discipline established here: controlled changes, comparable metrics, class-level analysis, and explicit measurement of the generalization gap.
+
+## Baseline Experiment Results
+
+| Exp | Experiment | Val Acc ↑ | Macro F1 ↑ | Best Val Loss ↓ | Gap |
+|:---:|:---|---:|---:|---:|---:|
+| 01 | No Augmentation | **86.56%** | **86.01%** | 0.4480 | 5.72% |
+| 02 | Augmentation | 77.89% | 78.02% | 0.6272 | 26.26% |
+| 03 | Dropout = 0.0 | 84.92% | 84.57% | 0.4737 | 8.42% |
+| 04 | Dropout = 0.3 (Control) | **86.56%** | **86.01%** | 0.4480 | 5.72% |
+| 05 | Dropout = 0.5 | 82.54% | 82.46% | 0.4918 | 13.01% |
+| 06 | Max Pooling (Control) | **86.56%** | **86.01%** | 0.4480 | 5.72% |
+| 07 | Average Pooling | 85.43% | 85.22% | **0.4512** | **4.50%** |
+| 08 | Weight Decay = 0 (Control) | **86.56%** | **86.01%** | 0.4480 | 5.72% |
+| 09 | Weight Decay = 1e-4 | 81.03% | 81.01% | 0.5534 | 21.02% |
+| 10 | Constant LR (Control) | **86.56%** | **86.01%** | 0.4480 | 5.72% |
+| 11 | StepLR | 85.18% | 84.87% | **0.4086** | 6.35% |
+| 12 | ReduceLROnPlateau | **88.57%** | **88.45%** | **0.3550** | 8.55% |
