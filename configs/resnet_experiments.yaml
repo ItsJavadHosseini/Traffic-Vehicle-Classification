@@ -1,0 +1,144 @@
+seed: 42
+
+dataset:
+  root_dir: "D:/Desktop/Traffic-Vehicle-Classification/dataset"
+
+split:
+  val_size: 0.2
+  test_size: 0.0
+
+experiments:
+
+  R1:
+    name: "resnet18_feature_extraction"
+
+    model:
+      name: "resnet18"
+      strategy: "feature_extraction"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+      lr: 1.0e-3
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 15
+
+    checkpoint:
+      load_from: null
+
+
+  R2:
+    name: "resnet18_fine_tune_stage_1"
+
+    model:
+      name: "resnet18"
+      strategy: "fine_tune_stage_1"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+
+      parameter_groups:
+        layer4:
+          lr: 1.0e-4
+
+        fc:
+          lr: 1.0e-3
+
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 15
+
+    checkpoint:
+      load_from: "R1"
+      load_best: true
+
+
+  R3:
+    name: "resnet18_fine_tune_stage_2"
+
+    model:
+      name: "resnet18"
+      strategy: "fine_tune_stage_2"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+
+      parameter_groups:
+        layer3:
+          lr: 1.0e-5
+
+        layer4:
+          lr: 1.0e-4
+
+        fc:
+          lr: 1.0e-3
+
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 15
+
+    checkpoint:
+      load_from: "R2"
+      load_best: true
+
+
+  R4:
+    name: "resnet18_from_scratch"
+
+    model:
+      name: "resnet18"
+      strategy: "from_scratch"
+      pretrained: false
+      small_input: true
+
+    data:
+      image_size: 64
+      batch_size: 64
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+      lr: 1.0e-3
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "CosineAnnealingLR"
+
+    training:
+      epochs: 35
+
+    checkpoint:
+      load_from: null
