@@ -32,7 +32,7 @@ experiments:
       name: "ReduceLROnPlateau"
 
     training:
-      epochs: 15
+      epochs: 20
 
     checkpoint:
       load_from: null
@@ -68,7 +68,7 @@ experiments:
       name: "ReduceLROnPlateau"
 
     training:
-      epochs: 15
+      epochs: 20
 
     checkpoint:
       load_from: "R1"
@@ -108,7 +108,7 @@ experiments:
       name: "ReduceLROnPlateau"
 
     training:
-      epochs: 15
+      epochs: 20
 
     checkpoint:
       load_from: "R2"
@@ -138,7 +138,7 @@ experiments:
       name: "CosineAnnealingLR"
 
     training:
-      epochs: 35
+      epochs: 45
 
     checkpoint:
       load_from: null

@@ -1,7 +1,8 @@
+from src.evaluation.evaluator import Evaluator
 import json
 import time
 from pathlib import Path
-
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -59,6 +60,7 @@ class ResNetTrainer:
         self.strategy = self.model.strategy
 
         self.criterion = nn.CrossEntropyLoss()
+        self.evaluator = Evaluator()
 
         # ----------------------------------------------------
         # Optimizer
@@ -81,7 +83,7 @@ class ResNetTrainer:
         # ----------------------------------------------------
 
         self.history = []
-
+        self.best_val_macro_f1 = float("-inf")
         self.best_val_loss = float("inf")
 
         self.best_epoch = None
@@ -438,7 +440,6 @@ class ResNetTrainer:
             self.model.backbone.eval()
 
             self.model.backbone.fc.train()
-
             return
 
         # ----------------------------------------------------
@@ -611,64 +612,65 @@ class ResNetTrainer:
         self.model.eval()
 
         running_loss = 0.0
-
-        correct = 0
-
         total = 0
 
+        all_targets = []
+        all_predictions = []
+        all_probabilities = []
+
         for images, labels in self.val_loader:
+            images = images.to(self.device)
+            labels = labels.to(self.device)
 
-            images = images.to(
-                self.device
-            )
-
-            labels = labels.to(
-                self.device
-            )
-
-            outputs = self.model(
-                images
-            )
+            outputs = self.model(images)
 
             loss = self.criterion(
                 outputs,
                 labels,
             )
 
-            batch_size = (
-                labels.size(0)
-            )
+            batch_size = labels.size(0)
 
             running_loss += (
-                loss.item()
-                * batch_size
+                    loss.item() * batch_size
             )
-
-            predictions = (
-                outputs.argmax(
-                    dim=1
-                )
-            )
-
-            correct += (
-                predictions == labels
-            ).sum().item()
 
             total += batch_size
 
-        val_loss = (
-            running_loss / total
+            probabilities = torch.softmax(
+                outputs,
+                dim=1,
+            )
+
+            predictions = probabilities.argmax(
+                dim=1
+            )
+
+            all_targets.append(
+                labels.cpu().numpy()
+            )
+
+            all_predictions.append(
+                predictions.cpu().numpy()
+            )
+
+            all_probabilities.append(
+                probabilities.cpu().numpy()
+            )
+
+        val_loss = running_loss / total
+
+        y_true = np.concatenate(all_targets)
+        y_pred = np.concatenate(all_predictions)
+        y_prob = np.concatenate(all_probabilities)
+
+        metrics = self.evaluator.evaluate(
+            y_true=y_true,
+            y_pred=y_pred,
+            y_prob=y_prob,
         )
 
-        val_accuracy = (
-            correct / total
-        )
-
-        return (
-            val_loss,
-            val_accuracy,
-        )
-
+        return val_loss, metrics
     # ========================================================
     # Scheduler Step
     # ========================================================
@@ -710,11 +712,12 @@ class ResNetTrainer:
     # ========================================================
 
     def save_checkpoint(
-        self,
-        epoch,
-        val_loss,
-        val_accuracy,
-    ):
+                self,
+                epoch,
+                val_loss,
+                val_accuracy,
+                val_macro_f1,
+        ):
 
         checkpoint_path = (
             self.output_dir
@@ -741,6 +744,9 @@ class ResNetTrainer:
             "val_accuracy":
                 val_accuracy,
 
+            "val_macro_f1":
+                val_macro_f1,
+
             "strategy":
                 self.strategy,
 
@@ -750,7 +756,6 @@ class ResNetTrainer:
             "experiment_config":
                 self.experiment_config,
         }
-
         torch.save(
             checkpoint,
             checkpoint_path,
@@ -833,8 +838,15 @@ class ResNetTrainer:
 
             (
                 val_loss,
-                val_accuracy,
+                metrics,
             ) = self.validate()
+
+            val_accuracy = metrics.accuracy
+            val_macro_f1 = metrics.macro_f1
+            val_macro_precision = metrics.macro_precision
+            val_macro_recall = metrics.macro_recall
+            val_weighted_f1 = metrics.weighted_f1
+            val_roc_auc = metrics.roc_auc
 
             # ------------------------------------------------
             # Scheduler
@@ -882,13 +894,27 @@ class ResNetTrainer:
                 "val_accuracy":
                     val_accuracy,
 
+                "val_macro_f1":
+                    val_macro_f1,
+
+                "val_macro_precision":
+                    val_macro_precision,
+
+                "val_macro_recall":
+                    val_macro_recall,
+
+                "val_weighted_f1":
+                    val_weighted_f1,
+
+                "val_roc_auc":
+                    val_roc_auc,
+
                 "learning_rates":
                     learning_rates,
 
                 "epoch_time":
                     epoch_time,
             }
-
             self.history.append(
                 epoch_record
             )
@@ -898,26 +924,23 @@ class ResNetTrainer:
             # ------------------------------------------------
 
             is_best = (
-                val_loss
-                < self.best_val_loss
+                    val_macro_f1
+                    > self.best_val_macro_f1
             )
 
             if is_best:
-
-                self.best_val_loss = (
-                    val_loss
+                self.best_val_macro_f1 = (
+                    val_macro_f1
                 )
 
-                self.best_epoch = (
-                    epoch
-                )
+                self.best_epoch = epoch
 
                 self.save_checkpoint(
                     epoch=epoch,
                     val_loss=val_loss,
                     val_accuracy=val_accuracy,
+                    val_macro_f1=val_macro_f1,
                 )
-
             # ------------------------------------------------
             # Console output
             # ------------------------------------------------
@@ -929,13 +952,13 @@ class ResNetTrainer:
                     learning_rates
                 )
             )
-
             print(
                 f"Epoch [{epoch:02d}/{self.epochs:02d}] "
                 f"| Train Loss: {train_loss:.4f} "
                 f"| Train Acc: {train_accuracy:.4f} "
                 f"| Val Loss: {val_loss:.4f} "
                 f"| Val Acc: {val_accuracy:.4f} "
+                f"| Val Macro F1: {val_macro_f1:.4f} "
                 f"| {lr_text} "
                 f"| Time: {epoch_time:.1f}s"
             )
