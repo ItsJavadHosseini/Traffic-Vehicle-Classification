@@ -142,3 +142,70 @@ experiments:
 
     checkpoint:
       load_from: null
+  R34_1:
+
+    name: "resnet34_feature_extraction"
+
+    model:
+      name: "resnet34"
+      strategy: "feature_extraction"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+      lr: 1.0e-3
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 20
+
+    checkpoint:
+      load_from: null
+      load_best: false
+
+
+  R34_2:
+
+    name: "resnet34_fine_tune_stage_1"
+
+    model:
+      name: "resnet34"
+      strategy: "fine_tune_stage_1"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+
+      parameter_groups:
+        layer4:
+          lr: 1.0e-4
+
+        fc:
+          lr: 1.0e-3
+
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 35
+
+    checkpoint:
+      load_from: "R34_1"
+      load_best: true

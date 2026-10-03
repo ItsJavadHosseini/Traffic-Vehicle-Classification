@@ -18,7 +18,10 @@ from src.data.resnet_transforms import (
     get_resnet_train_transform,
     get_resnet_eval_transform,
 )
-from src.models.m_resnet import ResNet18Model
+from src.models.m_resnet import (
+    ResNet18Model,
+    ResNet34Model,
+)
 from src.training.resnet_trainer import ResNetTrainer
 
 
@@ -113,30 +116,38 @@ class ResNetExperimentRunner:
     def create_model(self):
 
         model_config = (
-            self.experiment_config[
-                "model"
-            ]
+            self.experiment_config["model"]
         )
 
-        model = ResNet18Model(
-            num_classes=8,
-            strategy=model_config[
-                "strategy"
-            ],
-            pretrained=model_config[
-                "pretrained"
-            ],
-            small_input=model_config[
-                "small_input"
-            ],
-        )
+        model_name = model_config["name"]
 
-        model = model.to(
-            self.device
-        )
+        if model_name == "resnet18":
+
+            model = ResNet18Model(
+                num_classes=8,
+                strategy=model_config["strategy"],
+                pretrained=model_config["pretrained"],
+                small_input=model_config["small_input"],
+            )
+
+        elif model_name == "resnet34":
+
+            model = ResNet34Model(
+                num_classes=8,
+                strategy=model_config["strategy"],
+                pretrained=model_config["pretrained"],
+                small_input=model_config["small_input"],
+            )
+
+        else:
+
+            raise ValueError(
+                f"Unsupported model: {model_name}"
+            )
+
+        model = model.to(self.device)
 
         return model
-
     # ========================================================
     # Data
     # ========================================================
