@@ -27,3 +27,6 @@ wheels/
 
 notebooks/
 ARTIFACTS/
+
+.agents/
+.claude/
