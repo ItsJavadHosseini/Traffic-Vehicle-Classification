@@ -142,3 +142,124 @@ experiments:
 
     checkpoint:
       load_from: null
+  R34_1:
+
+    name: "resnet34_feature_extraction"
+
+    model:
+      name: "resnet34"
+      strategy: "feature_extraction"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+      lr: 1.0e-3
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 20
+
+    checkpoint:
+      load_from: null
+      load_best: false
+
+
+  R34_2:
+
+    name: "resnet34_fine_tune_stage_1"
+
+    model:
+      name: "resnet34"
+      strategy: "fine_tune_stage_1"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+
+      parameter_groups:
+        layer4:
+          lr: 1.0e-4
+
+        fc:
+          lr: 1.0e-3
+
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 35
+
+    checkpoint:
+      load_from: "R34_1"
+      load_best: true
+
+
+  R34_3:
+
+    name: "resnet34_fine_tune_stage_2_augmented"
+
+    model:
+      name: "resnet34"
+      strategy: "fine_tune_stage_2"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    augmentation:
+      enabled: true
+      horizontal_flip: true
+      rotation: 10
+      color_jitter:
+        brightness: 0.2
+        contrast: 0.2
+        saturation: 0.15
+        hue: 0.03
+      random_resized_crop:
+        scale: [ 0.8, 1.0 ]
+        ratio: [ 0.9, 1.1 ]
+
+    optimizer:
+      name: "AdamW"
+
+      parameter_groups:
+        layer3:
+          lr: 1.0e-5
+
+        layer4:
+          lr: 5.0e-5
+
+        fc:
+          lr: 5.0e-4
+
+      weight_decay: 1.0e-4
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+
+    training:
+      epochs: 35
+
+    checkpoint:
+      load_from: "R34_2"
+      load_best: true

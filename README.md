@@ -2,7 +2,9 @@
 
 A deep learning project for multi-class traffic vehicle image classification using PyTorch.
 
-The project focuses on building a reproducible image-classification pipeline, starting with a CNN baseline and progressing to transfer learning with ImageNet-pretrained ResNet18.
+The project started as an experiment-driven image classification pipeline, progressing from a custom CNN baseline to transfer learning with ResNet architectures. In version `1.1.0`, the project is extended with a Streamlit-based inference application that supports single-image prediction and batch prediction for both labeled and unlabeled image datasets.
+
+---
 
 ## Overview
 
@@ -22,17 +24,24 @@ The project follows an experiment-driven approach rather than focusing only on f
 The main objectives are:
 
 * Establish a reproducible CNN baseline
-* Investigate the effect of training and optimization strategies
-* Evaluate transfer learning with ResNet18
-* Compare feature extraction and progressive fine-tuning
+* Investigate training and optimization strategies
+* Evaluate transfer learning with ResNet architectures
+* Compare different model configurations
 * Maintain explicit experiment configurations
-* Separate training, evaluation, and prediction pipelines
+* Separate training, evaluation, and inference pipelines
 * Preserve trained models as reusable artifacts
+* Provide a practical inference application
+* Support single-image and batch prediction
+* Support both labeled and unlabeled image datasets
 
-## Project Structure
+---
+
+# Project Structure
 
 ```text
 Traffic-Vehicle-Classification/
+│
+├── app.py
 │
 ├── configs/
 │   ├── baseline.yaml
@@ -73,39 +82,45 @@ Traffic-Vehicle-Classification/
 └── README.md
 ```
 
-The project is organized around reproducible experiments, model artifacts, and a separate inference pipeline.
+The project is organized around reproducible experiments, trained model artifacts, evaluation, and a separate inference application.
+
+---
 
 # Dataset
 
-The dataset contains **3,982 images** distributed across eight vehicle classes.
+The dataset contains eight vehicle classes:
 
-| Class       |    Images |
-| ----------- | --------: |
-| `ambulance` |       350 |
-| `autobus`   |       482 |
-| `kamyun`    |       437 |
-| `kamyunet`  |       609 |
-| `minibus`   |       459 |
-| `savari`    |       561 |
-| `taxi`      |       533 |
-| `vanet`     |       551 |
-| **Total**   | **3,982** |
+| Class       |
+| ----------- |
+| `ambulance` |
+| `autobus`   |
+| `kamyun`    |
+| `kamyunet`  |
+| `minibus`   |
+| `savari`    |
+| `taxi`      |
+| `vanet`     |
 
-The dataset is moderately imbalanced, with the number of images per class ranging from 350 to 609.
-
-Several vehicle categories are visually similar, particularly:
+The dataset contains several visually similar vehicle categories, particularly:
 
 ```text
 kamyun
 kamyunet
 vanet
+```
+
+and:
+
+```text
 autobus
 minibus
 ```
 
-For this reason, aggregate accuracy alone is not sufficient to understand model behavior. Macro-averaged metrics, confusion matrices, and class-level error analysis are used throughout the project.
+Because of these similarities, aggregate accuracy alone is not sufficient to understand model behavior. Macro-averaged metrics, confusion matrices, and class-level error analysis are used throughout the project.
 
 Before model training, the dataset was audited to verify its structure and image data.
+
+---
 
 # Models
 
@@ -121,225 +136,48 @@ The architecture consists of four convolutional stages with increasing feature c
 
 followed by global pooling and a fully connected classifier.
 
-The selected baseline configuration uses:
+The CNN serves as a reference model for evaluating the benefit of more advanced architectures.
+
+---
+
+# ResNet
+
+ResNet is the main family of architectures investigated in the project.
+
+The project evaluates transfer learning and fine-tuning strategies using ResNet-based models.
+
+The experiments investigate questions such as:
+
+1. How useful are pretrained visual representations for this dataset?
+2. Does fine-tuning improve over feature extraction?
+3. How does the depth of fine-tuning affect performance?
+4. How do different ResNet configurations compare?
+
+The trained models are preserved as reusable checkpoints and can be selected directly from the inference application.
+
+---
+
+# Model Selection
+
+The inference application currently provides four trained models that can be selected by the user.
+
+The default model is:
 
 ```text
-Dropout:        0.3
-Pooling:        Max
-Optimizer:      AdamW
-Learning Rate:  0.001
-Weight Decay:   0
-Scheduler:      ReduceLROnPlateau
-Augmentation:   Disabled
+ResNet34-2
 ```
 
-The best baseline configuration achieved:
+Additional models can be selected directly from the application without changing the prediction pipeline.
 
-```text
-Validation Accuracy: 88.57%
-Macro Precision:     88.84%
-Macro Recall:        88.37%
-Macro F1:            88.45%
-Validation Loss:      0.3550
-```
+The project is designed so that new architectures can be added to the model selection system as the project evolves.
 
-The CNN serves as the reference model for evaluating the benefit of pretrained architectures.
-
-Detailed baseline experiments and ablation results are documented separately.
-
-# ResNet18
-
-ResNet18 is the main architecture investigated in this project.
-
-The ResNet phase focuses on transfer learning and progressive fine-tuning using an ImageNet-pretrained ResNet18.
-
-The original classification head is replaced with an eight-class classifier for the vehicle classification task.
-
-Four experiments were designed:
-
-* R1 — Feature Extraction
-* R2 — Fine-Tuning Stage 1
-* R3 — Fine-Tuning Stage 2
-* R4 — Training from Scratch
-
-## R1 — Feature Extraction
-
-R1 uses ImageNet-pretrained ResNet18 primarily as a feature extractor.
-
-The pretrained convolutional backbone remains frozen while the final classification layer is trained for the eight vehicle classes.
-
-```text
-ImageNet-pretrained ResNet18
-            │
-            ├── Frozen Backbone
-            │
-            └── Trainable FC
-```
-
-R1 establishes the initial transfer-learning reference.
-
-## R2 — Fine-Tuning Stage 1
-
-R2 continues from the best checkpoint obtained in R1.
-
-The final ResNet block, `layer4`, is unfrozen together with the classification head.
-
-Different learning rates are used for pretrained and newly initialized parameters:
-
-```text
-layer4 → 1e-4
-fc     → 1e-3
-```
-
-The classification head receives larger updates because it is newly initialized, while `layer4` is adapted more conservatively from its pretrained representation.
-
-This experiment evaluates whether adapting the highest-level convolutional features improves performance over pure feature extraction.
-
-## R3 — Fine-Tuning Stage 2
-
-R3 continues from the best checkpoint obtained in R2.
-
-The trainable components are expanded to:
-
-```text
-layer3
-layer4
-fc
-```
-
-with progressively smaller learning rates:
-
-```text
-layer3 → 1e-5
-layer4 → 1e-4
-fc     → 1e-3
-```
-
-Conceptually:
-
-```text
-LR(layer3) < LR(layer4) < LR(fc)
-```
-
-This allows deeper pretrained representations to adapt while applying smaller updates to the more general features learned during ImageNet pretraining.
-
-R3 represents the deepest fine-tuning stage in the V1 ResNet experiments.
-
-## R4 — ResNet18 From Scratch
-
-R4 removes ImageNet pretraining completely.
-
-The entire ResNet18 is initialized randomly and trained using only the project dataset.
-
-The configuration differs from the pretrained experiments:
-
-```text
-Initialization:   Random
-Input Resolution: 64 × 64
-Batch Size:       64
-Epochs:           45
-Scheduler:        CosineAnnealingLR
-```
-
-R4 provides an independent from-scratch reference for studying the contribution of pretrained representations.
-
-Because R4 also uses a different input resolution and training configuration, its result should not be interpreted as a pure pretraining ablation against R1–R3.
-
-# ResNet Experimental Design
-
-The main transfer-learning progression is:
-
-```text
-                ResNet18
-                   │
-            ImageNet Pretrained
-                   │
-                  R1
-                   │
-          Fine-tune layer4
-                   │
-                  R2
-                   │
-      Fine-tune layer3 + layer4
-                   │
-                  R3
-```
-
-An independent branch evaluates training without pretrained weights:
-
-```text
-ResNet18
-   │
-Random Initialization
-   │
-   R4
-```
-
-The experiments investigate four main questions:
-
-1. How useful are ImageNet-pretrained visual representations for this dataset?
-2. Does fine-tuning `layer4` improve over feature extraction?
-3. Does progressively deeper fine-tuning improve performance further?
-4. How does a from-scratch ResNet18 compare with transfer learning?
-
-# Training Configuration
-
-The pretrained ResNet experiments use:
-
-```text
-Architecture:       ResNet18
-Initialization:     ImageNet pretrained
-Input Resolution:   224 × 224
-Batch Size:         32
-Optimizer:          AdamW
-Weight Decay:       1e-4
-Scheduler:          ReduceLROnPlateau
-Epochs:             20
-Normalization:      ImageNet
-```
-
-R4 uses:
-
-```text
-Architecture:       ResNet18
-Initialization:     Random
-Input Resolution:   64 × 64
-Batch Size:         64
-Optimizer:          AdamW
-Weight Decay:       1e-4
-Scheduler:          CosineAnnealingLR
-Epochs:             45
-```
-
-The experiment parameters are defined through YAML configuration files rather than being hard-coded inside the training pipeline.
-
-# Checkpoint Progression
-
-The fine-tuning experiments are connected through model checkpoints:
-
-```text
-R1
- │
- └── Best Checkpoint
-        ↓
-       R2
-        │
-        └── Best Checkpoint
-               ↓
-              R3
-```
-
-R2 starts from the best R1 checkpoint.
-
-R3 starts from the best R2 checkpoint.
-
-This makes R1 → R2 → R3 a progressive fine-tuning pipeline rather than three completely independent training runs.
-
-R4 is independent and starts from random initialization.
+---
 
 # Evaluation
 
-Model evaluation is based on multiple metrics:
+Model evaluation is based on multiple metrics rather than accuracy alone.
+
+The main metrics include:
 
 * Validation Accuracy
 * Macro Precision
@@ -347,71 +185,260 @@ Model evaluation is based on multiple metrics:
 * Macro F1
 * Validation Loss
 
-Macro-averaged metrics are important because they give each class equal importance regardless of its number of samples.
+Macro-averaged metrics are particularly important because they give each class equal importance regardless of the number of samples.
 
 Confusion matrices are also used to identify class-level weaknesses and visually similar vehicle categories.
 
-The main difficult categories include:
-
-```text
-kamyun
-kamyunet
-vanet
-autobus
-minibus
-```
+---
 
 # Prediction Pipeline
 
-The trained ResNet model can be loaded independently from the training pipeline.
+The prediction pipeline handles:
 
-The prediction module handles:
-
-1. Loading the trained checkpoint
+1. Loading the selected trained checkpoint
 2. Restoring the model architecture
 3. Loading class names
 4. Applying the required preprocessing
 5. Running inference
 6. Calculating class probabilities
-7. Returning the predicted class and confidence
+7. Returning the predicted class
+8. Returning prediction confidence
 
-The ResNet inference pipeline is:
+Conceptually:
 
 ```text
 Input Image
-    ↓
-RGB Conversion
-    ↓
-Resize
-    ↓
-Center Crop
-    ↓
-ToTensor
-    ↓
-ImageNet Normalization
-    ↓
-ResNet18
-    ↓
-Softmax
-    ↓
-Class + Confidence
+     ↓
+Preprocessing
+     ↓
+Selected Model
+     ↓
+Class Probabilities
+     ↓
+Predicted Class
+     ↓
+Confidence
 ```
 
-Example output:
+The application displays the predicted class together with its confidence.
+
+Example:
 
 ```text
-Class: ambulance
-Index: 0
-Confidence: 1.0000
+Prediction: taxi
+Confidence: 94.3%
 ```
 
-The prediction pipeline has been successfully tested with the trained ResNet checkpoint.
+---
+
+# Web Application
+
+Version `1.1.0` introduces a Streamlit-based inference interface.
+
+The application provides three main prediction modes:
+
+```text
+Single Image Prediction
+        │
+        ├── Batch Prediction — Labeled
+        │
+        └── Batch Prediction — Unlabeled
+```
+
+The interface also allows the user to select between the available trained models.
+
+---
+
+# Usage Guide
+
+## 1. Installation
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+cd Traffic-Vehicle-Classification
+```
+
+Install the project dependencies using `uv`:
+
+```bash
+uv sync
+```
+
+---
+
+## 2. Run the Application
+
+Start the Streamlit application with:
+
+```bash
+uv run streamlit run app.py
+```
+
+After starting the application, Streamlit will provide a local URL that can be opened in a web browser.
+
+---
+
+## 3. Single Image Prediction
+
+The single-image mode is designed for testing an individual image.
+
+Typical workflow:
+
+```text
+Select Model
+     ↓
+Upload Image
+     ↓
+Run Prediction
+     ↓
+Predicted Class
+     ↓
+Confidence
+```
+
+The application returns the predicted vehicle class and its confidence score.
+
+---
+
+## 4. Batch Prediction — Labeled Dataset
+
+The labeled batch mode is intended for datasets where the images are already organized according to their true classes.
+
+The expected structure is:
+
+```text
+dataset/
+├── ambulance/
+├── autobus/
+├── kamyun/
+├── kamyunet/
+├── minibus/
+├── savari/
+├── taxi/
+└── vanet/
+```
+
+The application processes the images and compares the model predictions against the actual class labels.
+
+This makes the labeled batch mode useful not only for inference, but also for evaluating a trained model on a collection of images.
+
+The workflow is:
+
+```text
+Labeled Dataset
+      ↓
+Select Model
+      ↓
+Batch Inference
+      ↓
+Compare Prediction vs True Label
+      ↓
+Evaluation Results
+      ↓
+Organized Prediction Output
+```
+
+The predicted images are also organized into newly created class folders based on the model's predictions.
+
+---
+
+## 5. Batch Prediction — Unlabeled Dataset
+
+The unlabeled batch mode is intended for images that do not have an existing class structure.
+
+For example:
+
+```text
+images/
+├── image_001.jpg
+├── image_002.jpg
+├── image_003.jpg
+└── ...
+```
+
+The application classifies the images automatically.
+
+The predicted images are then organized into newly created class folders:
+
+```text
+predictions/
+├── ambulance/
+├── autobus/
+├── kamyun/
+├── kamyunet/
+├── minibus/
+├── savari/
+├── taxi/
+└── vanet/
+```
+
+This makes it possible to use the application as an image-sorting tool in addition to a classification system.
+
+The resulting prediction folders can be saved as a ZIP archive.
+
+---
+
+# Batch Prediction Output
+
+Both labeled and unlabeled batch prediction modes organize the processed images according to their predicted class.
+
+Conceptually:
+
+```text
+Input Dataset
+     ↓
+Batch Inference
+     ↓
+┌───────────────┐
+│ Prediction    │
+│ + Confidence  │
+└───────────────┘
+     ↓
+Class-based Folders
+     ↓
+ZIP Archive
+```
+
+This allows the prediction results to be easily stored, transferred, or used for further analysis.
+
+---
+
+# Application Workflow
+
+The overall application workflow is:
+
+```text
+                    Streamlit App
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+       Select Model             Prediction Mode
+             │                       │
+       ┌─────┴─────┐        ┌───────┼─────────┐
+       │           │        │       │         │
+    Model 1     Model 2   Single   Labeled  Unlabeled
+       │           │      Image    Batch      Batch
+       └─────┬─────┘        │       │         │
+             │              └───────┴─────────┘
+             │                      │
+             └──────────┬───────────┘
+                        ↓
+                    Prediction
+                        ↓
+                 Class + Confidence
+                        ↓
+                 Organized Results
+```
+
+---
 
 # Error Analysis
 
 Model performance is not evaluated only through aggregate metrics.
 
-After selecting the strongest ResNet configuration, class-level error analysis can be used to investigate:
+Class-level error analysis can be used to investigate:
 
 * Visually similar vehicles
 * Unusual viewpoints
@@ -423,11 +450,26 @@ After selecting the strongest ResNet configuration, class-level error analysis c
 
 Confusion matrices and representative incorrect predictions provide additional information about where the model struggles.
 
-This is particularly important for visually similar classes such as `kamyun`, `kamyunet`, and `vanet`.
+This is particularly important for visually similar classes such as:
+
+```text
+kamyun
+kamyunet
+vanet
+```
+
+and:
+
+```text
+autobus
+minibus
+```
+
+---
 
 # Reproducibility
 
-The project uses explicit experiment configurations and a fixed random seed:
+The project uses explicit experiment configurations and a fixed random seed.
 
 ```yaml
 seed: 42
@@ -450,61 +492,156 @@ Important experimental parameters are defined explicitly, including:
 
 This configuration-driven approach makes experiments easier to reproduce and compare.
 
+---
+
 # Experiment Reports
 
 Detailed technical analysis is kept separately from this README.
 
-The project reports cover:
+The project reports cover topics such as:
 
 * Dataset audit
 * CNN baseline experiments
 * Ablation studies
-* ResNet18 experiments
+* ResNet experiments
+* Model comparison
 * Error analysis
 
-The README provides the high-level project overview, while the reports contain the detailed methodology, experiment configurations, metrics, and analysis.
+The README provides the high-level project overview and application usage, while the reports contain the detailed methodology, experiment configurations, metrics, and analysis.
 
-# V1 Scope
+---
 
-Version `1.0.0` establishes the first complete version of the classification pipeline:
+# Version 1.1.0
+
+Version `1.1.0` extends the original machine-learning pipeline into a usable inference application.
+
+The main additions are:
 
 ```text
-Dataset
-   ↓
-Data Audit
-   ↓
-CNN Baseline
-   ↓
-ResNet18 Experiments
-   ↓
-Checkpoint Selection
-   ↓
-Prediction Pipeline
+v1.0.0
+│
+├── Dataset
+├── Data Audit
+├── CNN Baseline
+├── ResNet Experiments
+├── Checkpoint Selection
+└── Prediction Pipeline
+        │
+        ▼
+v1.1.0
+│
+├── Streamlit Web UI
+├── Model Selection
+├── Single Image Prediction
+├── Labeled Batch Prediction
+├── Unlabeled Batch Prediction
+├── Confidence Display
+└── ZIP Export of Organized Predictions
 ```
 
-The primary focus of V1 is the development and evaluation of a ResNet18-based classification pipeline, supported by a from-scratch CNN baseline.
+The main focus of `v1.1.0` is moving from an experiment-focused ML pipeline toward a practical image classification application.
+
+---
 
 # Future Work
 
-Potential directions for the next development phase include:
+## v1.2.0 — Vision Transformer
 
-* MobileNet experiments
-* ResNet34 experiments
-* Streamlit inference interface
-* Targeted data augmentation
-* Deeper error analysis
-* Confusion-matrix-driven dataset analysis
-* Grad-CAM visualization
-* Model comparison in the prediction interface
-* Inference optimization and deployment
+The next major model expansion is planned around Vision Transformers (ViT).
+
+The goal is to add ViT to the existing model ecosystem and compare its behavior against the current CNN and ResNet-based architectures.
+
+The planned comparison will include:
+
+```text
+CNN
+ │
+ ├── Baseline CNN
+ │
+ └── ResNet
+       │
+       └── ResNet34-2
+       
+ViT
+ │
+ └── Vision Transformer
+```
+
+Future development may also include:
+
+* OOD / Unknown Class Detection
+* MSP
+* Temperature Scaling
+* OpenMax
+* Cascade / Hierarchical Classification
+* Grad-CAM and explainability
+* Improved error analysis
+* Inference optimization
+* API deployment
+* Production-oriented model serving
+
+---
+
+# Roadmap
+
+```text
+v1.0.0
+│
+└── ML Pipeline & Model Evaluation
+        │
+        ▼
+v1.1.0
+│
+└── Application & Inference
+        │
+        ├── Streamlit UI
+        ├── Single Prediction
+        ├── Labeled Batch Prediction
+        ├── Unlabeled Batch Prediction
+        └── ZIP Export
+        │
+        ▼
+v1.2.0
+│
+└── ViT & Model Expansion
+        │
+        ▼
+Future
+│
+├── OOD Detection
+├── Cascade Classification
+├── Explainability
+└── Deployment
+```
+
+---
+
+# Technology Stack
+
+```text
+Python
+PyTorch
+Torchvision
+Streamlit
+uv
+YAML
+NumPy
+Pandas
+Scikit-learn
+```
+
+---
 
 # Version
 
 ```text
-Version: 1.0.0
+Version: 1.1.0
 Framework: PyTorch
 Task: Multi-Class Image Classification
-Primary Architecture: ResNet18
+Primary Model: ResNet34-2
+Interface: Streamlit
 ```
 
-The `v1.0.0` tag represents the frozen first version of the project.
+The `v1.0.0` tag represents the frozen first version of the ML classification pipeline.
+
+The `v1.1.0` release adds the application and inference layer on top of that pipeline.

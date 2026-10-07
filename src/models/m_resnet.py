@@ -1,8 +1,239 @@
 import torch
 import torch.nn as nn
 
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import (
+    resnet18,
+    resnet34,
+    ResNet18_Weights,
+    ResNet34_Weights,
+)
 
+
+class ResNet34Model(nn.Module):
+
+    def __init__(
+        self,
+        num_classes=8,
+        strategy="feature_extraction",
+        pretrained=True,
+        small_input=False,
+    ):
+        super().__init__()
+
+        self.strategy = strategy
+        self.pretrained = pretrained
+        self.small_input = small_input
+
+        # ----------------------------------------------------
+        # Load ResNet34
+        # ----------------------------------------------------
+
+        if pretrained:
+            weights = ResNet34_Weights.DEFAULT
+        else:
+            weights = None
+
+        self.backbone = resnet34(
+            weights=weights
+        )
+
+        # ----------------------------------------------------
+        # Small input configuration
+        # ----------------------------------------------------
+
+        if small_input:
+
+            self.backbone.conv1 = nn.Conv2d(
+                3,
+                64,
+                kernel_size=3,
+                stride=1,
+                padding=1,
+                bias=False,
+            )
+
+            self.backbone.maxpool = nn.Identity()
+
+        # ----------------------------------------------------
+        # Replace classifier
+        # ----------------------------------------------------
+
+        in_features = (
+            self.backbone.fc.in_features
+        )
+
+        self.backbone.fc = nn.Linear(
+            in_features,
+            num_classes,
+        )
+
+        # ----------------------------------------------------
+        # Configure trainable layers
+        # ----------------------------------------------------
+
+        self.configure_trainable_layers()
+
+    def configure_trainable_layers(self):
+
+        for parameter in self.backbone.parameters():
+            parameter.requires_grad = False
+
+        if self.strategy == "feature_extraction":
+
+            for parameter in self.backbone.fc.parameters():
+                parameter.requires_grad = True
+
+        elif self.strategy == "fine_tune_stage_1":
+
+            for parameter in self.backbone.layer4.parameters():
+                parameter.requires_grad = True
+
+            for parameter in self.backbone.fc.parameters():
+                parameter.requires_grad = True
+
+        elif self.strategy == "fine_tune_stage_2":
+
+            for parameter in self.backbone.layer3.parameters():
+                parameter.requires_grad = True
+
+            for parameter in self.backbone.layer4.parameters():
+                parameter.requires_grad = True
+
+            for parameter in self.backbone.fc.parameters():
+                parameter.requires_grad = True
+
+        elif self.strategy == "from_scratch":
+
+            for parameter in self.backbone.parameters():
+                parameter.requires_grad = True
+
+        else:
+
+            raise ValueError(
+                f"Unsupported strategy: {self.strategy}"
+            )
+
+    def forward(self, x):
+
+        return self.backbone(x)
+
+    def get_trainable_parameters(self):
+
+        return [
+            parameter
+            for parameter in self.parameters()
+            if parameter.requires_grad
+        ]
+
+    def get_trainable_parameter_count(self):
+
+        return sum(
+            parameter.numel()
+            for parameter in self.parameters()
+            if parameter.requires_grad
+        )
+
+    def get_total_parameter_count(self):
+
+        return sum(
+            parameter.numel()
+            for parameter in self.parameters()
+        )
+
+    def get_parameter_groups(
+        self,
+        layer3_lr=1e-5,
+        layer4_lr=1e-4,
+        fc_lr=1e-3,
+    ):
+
+        if self.strategy == "feature_extraction":
+
+            fc_parameters = [
+                parameter
+                for parameter in self.backbone.fc.parameters()
+                if parameter.requires_grad
+            ]
+
+            return [
+                {
+                    "params": fc_parameters,
+                    "lr": fc_lr,
+                }
+            ]
+
+        if self.strategy == "fine_tune_stage_1":
+
+            layer4_parameters = [
+                parameter
+                for parameter in self.backbone.layer4.parameters()
+                if parameter.requires_grad
+            ]
+
+            fc_parameters = [
+                parameter
+                for parameter in self.backbone.fc.parameters()
+                if parameter.requires_grad
+            ]
+
+            return [
+                {
+                    "params": layer4_parameters,
+                    "lr": layer4_lr,
+                },
+                {
+                    "params": fc_parameters,
+                    "lr": fc_lr,
+                },
+            ]
+
+        if self.strategy == "fine_tune_stage_2":
+
+            layer3_parameters = [
+                parameter
+                for parameter in self.backbone.layer3.parameters()
+                if parameter.requires_grad
+            ]
+
+            layer4_parameters = [
+                parameter
+                for parameter in self.backbone.layer4.parameters()
+                if parameter.requires_grad
+            ]
+
+            fc_parameters = [
+                parameter
+                for parameter in self.backbone.fc.parameters()
+                if parameter.requires_grad
+            ]
+
+            return [
+                {
+                    "params": layer3_parameters,
+                    "lr": layer3_lr,
+                },
+                {
+                    "params": layer4_parameters,
+                    "lr": layer4_lr,
+                },
+                {
+                    "params": fc_parameters,
+                    "lr": fc_lr,
+                },
+            ]
+
+        if self.strategy == "from_scratch":
+
+            return [
+                {
+                    "params": self.get_trainable_parameters(),
+                    "lr": fc_lr,
+                }
+            ]
+
+        raise ValueError(
+            f"Unsupported strategy: {self.strategy}"
+        )
 
 class ResNet18Model(nn.Module):
 

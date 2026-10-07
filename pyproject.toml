@@ -1,6 +1,6 @@
 [project]
 name = "traffic-vehicle-classification"
-version = "1.0.0"
+version = "1.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -17,6 +17,7 @@ dependencies = [
     "pillow>=12.3.0",
     "pyyaml>=6.0.3",
     "scikit-learn",
+    "streamlit>=1.65.0",
     "torch>=2.14.0",
     "torchvision>=0.29.0",
 ]
