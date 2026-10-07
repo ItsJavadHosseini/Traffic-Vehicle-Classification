@@ -27,6 +27,7 @@ wheels/
 
 notebooks/
 ARTIFACTS/
+
 .python-version
 .agents/
 .claude/
