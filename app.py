@@ -27,11 +27,19 @@ st.markdown(
     """
     <style>
 
-    /* ---------- Global ---------- */
+    /* ==================================================
+       GLOBAL
+       ================================================== */
 
     .stApp {
-        background-color: #0b0b0b;
-        color: #ffffff;
+        background:
+            radial-gradient(
+                circle at top right,
+                rgba(0, 255, 140, 0.06),
+                transparent 30%
+            ),
+            #070a08;
+        color: #f2fff8;
     }
 
     .block-container {
@@ -40,134 +48,241 @@ st.markdown(
         padding-bottom: 3rem;
     }
 
-    /* ---------- Header ---------- */
+    /* ==================================================
+       HEADER
+       ================================================== */
 
     .main-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: #ffffff;
-        margin-bottom: 0.2rem;
+        font-size: 2.6rem;
+        font-weight: 850;
+        color: #f2fff8;
+        margin-bottom: 0.15rem;
+        letter-spacing: -1px;
     }
 
     .main-title span {
-        color: #ff7a00;
+        color: #00e676;
     }
 
     .subtitle {
-        color: #a6a6a6;
-        font-size: 1rem;
+        color: #7f9589;
+        font-size: 0.95rem;
         margin-bottom: 2rem;
     }
 
-    /* ---------- Labels ---------- */
+    /* ==================================================
+       LABELS
+       ================================================== */
 
     label {
-        color: #ffffff !important;
+        color: #e9fff2 !important;
         font-weight: 600 !important;
     }
 
-    /* ---------- Selectbox ---------- */
+    /* ==================================================
+       SELECTBOX
+       ================================================== */
 
     div[data-baseweb="select"] > div {
-        background-color: #151515;
-        border: 1px solid #333333;
+        background-color: #0e1511;
+        border: 1px solid #24352b;
         border-radius: 10px;
     }
 
-    /* ---------- File uploader ---------- */
+    div[data-baseweb="select"] > div:hover {
+        border-color: #00e676;
+    }
+
+    /* ==================================================
+       FILE UPLOADER
+       ================================================== */
 
     section[data-testid="stFileUploader"] {
-        background-color: #121212;
-        border: 1px dashed #444444;
+        background-color: #0c120f;
+        border: 1px dashed #31513e;
         border-radius: 12px;
         padding: 1rem;
     }
 
-    /* ---------- Buttons ---------- */
+    section[data-testid="stFileUploader"]:hover {
+        border-color: #00e676;
+    }
+
+    /* ==================================================
+       BUTTONS
+       ================================================== */
 
     .stButton > button {
-        background-color: #ff7a00;
-        color: #ffffff;
+        background: linear-gradient(
+            135deg,
+            #00e676,
+            #00b85c
+        );
+        color: #031008;
         border: none;
-        border-radius: 8px;
-        font-weight: 700;
+        border-radius: 9px;
+        font-weight: 800;
         min-height: 42px;
+        transition: all 0.2s ease;
     }
 
     .stButton > button:hover {
-        background-color: #ff8f26;
-        color: #ffffff;
+        background: linear-gradient(
+            135deg,
+            #19ff91,
+            #00d86b
+        );
+        color: #031008;
+        transform: translateY(-1px);
+        box-shadow:
+            0 6px 20px rgba(0, 230, 118, 0.18);
     }
 
     .stDownloadButton > button {
-        background-color: #151515;
-        color: #ff7a00;
-        border: 1px solid #ff7a00;
-        border-radius: 8px;
-        font-weight: 600;
+        background-color: #0d1511;
+        color: #00e676;
+        border: 1px solid #00a957;
+        border-radius: 9px;
+        font-weight: 700;
     }
 
     .stDownloadButton > button:hover {
-        background-color: #ff7a00;
-        color: #ffffff;
+        background-color: #00e676;
+        color: #031008;
+        border-color: #00e676;
     }
 
-    /* ---------- Radio / Mode ---------- */
+    /* ==================================================
+       RADIO / MODE
+       ================================================== */
 
     div[role="radiogroup"] {
         gap: 0.35rem;
     }
 
     div[role="radiogroup"] label {
-        background-color: #151515;
-        border: 1px solid #333333;
+        background-color: #0e1511;
+        border: 1px solid #24352b;
         border-radius: 8px;
         padding: 0.35rem 0.8rem;
-        color: #cccccc !important;
+        color: #a8baaf !important;
     }
 
     div[role="radiogroup"] label:hover {
-        border-color: #ff7a00;
+        border-color: #00e676;
     }
 
-    /* ---------- Cards ---------- */
+    /* ==================================================
+       METRIC CARDS
+       ================================================== */
 
     .metric-card {
-        background-color: #151515;
-        border: 1px solid #292929;
+        background:
+            linear-gradient(
+                145deg,
+                #101a14,
+                #0b110e
+            );
+        border: 1px solid #20372a;
         border-radius: 12px;
         padding: 1rem;
         text-align: center;
     }
 
     .metric-label {
-        color: #999999;
+        color: #7f9589;
         font-size: 0.85rem;
     }
 
     .metric-value {
-        color: #ff7a00;
+        color: #00e676;
         font-size: 1.5rem;
         font-weight: 800;
     }
 
-    /* ---------- Divider ---------- */
+    /* ==================================================
+       DIVIDER
+       ================================================== */
 
     hr {
-        border-color: #292929;
+        border-color: #1d2d23;
     }
 
-    /* ---------- Dataframe ---------- */
+    /* ==================================================
+       DATAFRAME
+       ================================================== */
 
     div[data-testid="stDataFrame"] {
-        border: 1px solid #292929;
+        border: 1px solid #20372a;
         border-radius: 10px;
+        overflow: hidden;
     }
 
-    /* ---------- Info ---------- */
+    /* ==================================================
+       ALERTS
+       ================================================== */
 
     div[data-testid="stAlert"] {
         border-radius: 10px;
+    }
+
+    /* ==================================================
+       OOD WARNING
+       ================================================== */
+
+    .status-unknown {
+        background: rgba(255, 193, 7, 0.08);
+        border: 1px solid rgba(255, 193, 7, 0.35);
+        color: #ffc107;
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        font-weight: 700;
+    }
+
+    /* ==================================================
+       RESULT BOX
+       ================================================== */
+
+    .result-box {
+        background:
+            linear-gradient(
+                145deg,
+                #101b14,
+                #0b110e
+            );
+        border: 1px solid #203b2b;
+        border-radius: 14px;
+        padding: 1.2rem;
+        margin-top: 1rem;
+    }
+
+    .result-label {
+        color: #718579;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+
+    .result-value {
+        color: #f2fff8;
+        font-size: 1.45rem;
+        font-weight: 800;
+        margin-top: 0.2rem;
+    }
+
+    .result-value-green {
+        color: #00e676;
+        font-size: 1.45rem;
+        font-weight: 800;
+        margin-top: 0.2rem;
+    }
+
+    /* ==================================================
+       IMAGE
+       ================================================== */
+
+    img {
+        border-radius: 12px;
     }
 
     </style>
@@ -198,18 +313,14 @@ st.markdown(
 # MODEL + MODE
 # ==================================================
 
-col_model, col_mode = st.columns(
-    [1.3, 2.7]
-)
+col_model, col_mode = st.columns([1.3, 2.7])
 
 
 with col_model:
 
     model_name = st.selectbox(
         "Model",
-        options=list(
-            MODEL_REGISTRY.keys()
-        ),
+        options=list(MODEL_REGISTRY.keys()),
     )
 
 
@@ -279,16 +390,30 @@ if mode == "Single Image":
 
             st.divider()
 
+            # --------------------------------------
+            # Main Result
+            # --------------------------------------
+
             col1, col2 = st.columns(2)
 
             with col1:
 
                 st.markdown(
-                    "### Predicted Class"
+                    "### Final Prediction"
                 )
 
                 st.markdown(
-                    f"## :orange[{result['class_name']}]"
+                    f"""
+                    <div class="result-box">
+                        <div class="result-label">
+                            Classification Result
+                        </div>
+                        <div class="result-value-green">
+                            {result["class_name"]}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
 
             with col2:
@@ -298,7 +423,114 @@ if mode == "Single Image":
                 )
 
                 st.markdown(
-                    f"## :orange[{result['confidence']:.2%}]"
+                    f"""
+                    <div class="result-box">
+                        <div class="result-label">
+                            Softmax Confidence
+                        </div>
+                        <div class="result-value-green">
+                            {result["confidence"]:.2%}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            st.write("")
+
+            # --------------------------------------
+            # OOD Analysis
+            # --------------------------------------
+
+            st.subheader("OOD Analysis")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+
+                st.markdown(
+                    f"""
+                    <div class="result-box">
+                        <div class="result-label">
+                            Raw Prediction
+                        </div>
+                        <div class="result-value">
+                            {result["raw_class_name"]}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col2:
+
+                st.markdown(
+                    f"""
+                    <div class="result-box">
+                        <div class="result-label">
+                            Energy Score
+                        </div>
+                        <div class="result-value">
+                            {result["energy"]:.4f}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            with col3:
+
+                threshold = result.get(
+                    "energy_threshold"
+                )
+
+                if threshold is not None:
+
+                    st.markdown(
+                        f"""
+                        <div class="result-box">
+                            <div class="result-label">
+                                Energy Threshold
+                            </div>
+                            <div class="result-value">
+                                {threshold:.4f}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                else:
+
+                    st.markdown(
+                        """
+                        <div class="result-box">
+                            <div class="result-label">
+                                Energy Threshold
+                            </div>
+                            <div class="result-value">
+                                N/A
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+            st.write("")
+
+            # --------------------------------------
+            # OOD Warning
+            # --------------------------------------
+
+            if result["is_unknown"]:
+
+                st.markdown(
+                    """
+                    <div class="status-unknown">
+                        ⚠️ Possible Unknown Class — Please review manually.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
 
 
@@ -580,10 +812,8 @@ else:
                 )
             )
 
-            confusion_df = confusion
-
             st.dataframe(
-                confusion_df,
+                confusion,
                 width="stretch",
             )
 

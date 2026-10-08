@@ -7,6 +7,7 @@ from prediction.model_registry import MODEL_REGISTRY
 from prediction.preprocessing import get_eval_transform
 from src.models.m_baseline import DeepBaselineCNN
 from src.models.m_resnet import ResNet18Model, ResNet34Model
+from src.models.m_vit import ViTModel
 
 
 class ModelPredictor:
@@ -76,6 +77,11 @@ class ModelPredictor:
 
         self.transform = self._build_transform()
 
+        # Energy OOD threshold
+        self.energy_threshold = self.model_config.get(
+            "energy_threshold"
+        )
+
     def _build_model(self):
         architecture = self.model_config["architecture"]
 
@@ -106,6 +112,15 @@ class ModelPredictor:
                 pooling="max",
             )
 
+        if architecture == "vit_b16":
+            strategy = self.checkpoint["strategy"]
+
+            return ViTModel(
+                num_classes=len(self.class_names),
+                strategy=strategy,
+                pretrained=False,
+            )
+
         raise ValueError(
             f"Unsupported architecture: {architecture}"
         )
@@ -116,6 +131,7 @@ class ModelPredictor:
         if architecture in {
             "resnet18",
             "resnet34",
+            "vit_b16",
         }:
             experiment_config = self.checkpoint.get(
                 "experiment_config",
@@ -141,9 +157,20 @@ class ModelPredictor:
             f"Unsupported architecture: {architecture}"
         )
 
+    @staticmethod
+    def _calculate_energy(logits):
+        """
+        Energy Score:
+
+        E(x) = -logsumexp(logits)
+
+        Lower energy -> more likely known
+        Higher energy -> more likely unknown
+        """
+        return -torch.logsumexp(logits, dim=1)
+
     @torch.no_grad()
     def predict(self, image):
-
         if not isinstance(image, Image.Image):
             raise TypeError(
                 "image must be a PIL.Image.Image"
@@ -152,44 +179,70 @@ class ModelPredictor:
         image = image.convert("RGB")
 
         image_tensor = self.transform(image)
+        image_tensor = image_tensor.unsqueeze(0).to(self.device)
 
-        image_tensor = (
-            image_tensor
-            .unsqueeze(0)
-            .to(self.device)
-        )
+        # Raw model output
+        logits = self.model(image_tensor)
 
-        outputs = self.model(image_tensor)
-
+        # Softmax probabilities
         probabilities = torch.softmax(
-            outputs,
+            logits,
             dim=1,
         )
 
-        predicted_index = (
-            probabilities
-            .argmax(dim=1)
-            .item()
-        )
+        predicted_index = probabilities.argmax(
+            dim=1
+        ).item()
 
-        predicted_class = self.class_names[
+        raw_class_name = self.class_names[
             predicted_index
         ]
 
-        confidence = (
-            probabilities[
-                0,
-                predicted_index,
-            ].item()
-        )
+        confidence = probabilities[
+            0,
+            predicted_index,
+        ].item()
+
+        # --------------------------------------------------
+        # Energy OOD detection
+        # --------------------------------------------------
+
+        energy = self._calculate_energy(
+            logits
+        ).item()
+
+        is_unknown = False
+
+        if self.energy_threshold is not None:
+            is_unknown = (
+                energy > self.energy_threshold
+            )
+
+        # Final class shown to the application
+        if is_unknown:
+            final_class_name = "UNKNOWN"
+        else:
+            final_class_name = raw_class_name
 
         return {
-            "class_name": predicted_class,
+            # Final prediction
+            "class_name": final_class_name,
+
+            # Original classifier prediction
+            "raw_class_name": raw_class_name,
+
             "class_index": predicted_index,
+
+            # Softmax confidence
             "confidence": confidence,
-            "probabilities": (
-                probabilities[0]
-                .cpu()
-                .tolist()
-            ),
+
+            # Energy OOD information
+            "energy": energy,
+            "energy_threshold": self.energy_threshold,
+            "is_unknown": is_unknown,
+
+            # Full probability vector
+            "probabilities": probabilities[
+                0
+            ].cpu().tolist(),
         }
