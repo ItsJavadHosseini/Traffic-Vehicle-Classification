@@ -30,4 +30,13 @@ MODEL_REGISTRY = {
         "architecture": "vit_b16",
         "energy_threshold": -3.427922,
     },
+    "ResNet34 - R34_3 (Augmented)": {
+        "checkpoint": ARTIFACTS / "resnet" / "R34_3" / "best_model.pt",
+        "architecture": "resnet34",
+    },
+
+    "ViT-B/16 - V2": {
+        "checkpoint": ARTIFACTS / "vit" / "V2" / "best_model.pt",
+        "architecture": "vit_b16",
+    },
 }
