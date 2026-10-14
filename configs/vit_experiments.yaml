@@ -1,35 +1,43 @@
+
 seed: 42
 
 dataset:
-  root_dir: "D:/Desktop/Traffic-Vehicle-Classification/dataset_vit"
+  root_dir: "D:/Desktop/Traffic-Vehicle-Classification/dataset"
 
 split:
   val_size: 0.2
   test_size: 0.0
 
+
 experiments:
 
-  V1:
-    name: vit_b16_feature_extraction
+  # ==========================================================
+  # R34_1 — ResNet34 Feature Extraction
+  # ==========================================================
+
+  R34_1:
+    name: "resnet34_feature_extraction"
 
     model:
-      name: vit_b16
-      strategy: feature_extraction
+      name: "resnet34"
+      strategy: "feature_extraction"
       pretrained: true
+      small_input: false
 
     data:
       image_size: 224
-      batch_size: 16
+      batch_size: 32
+      normalization: "imagenet"
 
     optimizer:
-      name: AdamW
+      name: "AdamW"
       lr: 0.001
       weight_decay: 0.0001
 
     scheduler:
-      name: ReduceLROnPlateau
-      mode: min
-      factor: 0.1
+      name: "ReduceLROnPlateau"
+      mode: "min"
+      factor: 0.5
       patience: 3
 
     training:
@@ -38,3 +46,108 @@ experiments:
     checkpoint:
       load_from: null
       load_best: false
+
+
+  # ==========================================================
+  # R34_2 — ResNet34 Fine-Tuning Stage 1
+  # ==========================================================
+
+  R34_2:
+    name: "resnet34_fine_tune_stage_1"
+
+    model:
+      name: "resnet34"
+      strategy: "fine_tune_stage_1"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+    optimizer:
+      name: "AdamW"
+      weight_decay: 0.0001
+
+      parameter_groups:
+        layer4:
+          lr: 0.0001
+
+        fc:
+          lr: 0.001
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+      mode: "min"
+      factor: 0.5
+      patience: 3
+
+    training:
+      epochs: 35
+
+    checkpoint:
+      load_from: "R34_1"
+      load_best: true
+
+
+  # ==========================================================
+  # R34_3 — ResNet34 Fine-Tuning Stage 2 + Augmentation
+  # ==========================================================
+
+  R34_3:
+    name: "resnet34_fine_tune_stage_2_augmented"
+
+    model:
+      name: "resnet34"
+      strategy: "fine_tune_stage_2"
+      pretrained: true
+      small_input: false
+
+    data:
+      image_size: 224
+      batch_size: 32
+      normalization: "imagenet"
+
+      augmentation:
+        enabled: true
+
+        horizontal_flip: true
+        rotation: 10
+
+        color_jitter:
+          brightness: 0.2
+          contrast: 0.2
+          saturation: 0.15
+          hue: 0.03
+
+        random_resized_crop:
+          scale: [0.8, 1.0]
+          ratio: [0.9, 1.1]
+
+    optimizer:
+      name: "AdamW"
+      weight_decay: 0.0001
+
+      parameter_groups:
+        layer3:
+          lr: 0.00001
+
+        layer4:
+          lr: 0.00005
+
+        fc:
+          lr: 0.0005
+
+    scheduler:
+      name: "ReduceLROnPlateau"
+      mode: "min"
+      factor: 0.5
+      patience: 3
+
+    training:
+      epochs: 35
+
+    checkpoint:
+      load_from: "R34_2"
+      load_best: true

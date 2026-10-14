@@ -283,60 +283,55 @@ class DataModule:
     # Augmented transform
     # ========================================================
 
-    def build_augmented_transform(
-        self,
-        augmentation_config,
-    ):
-
-        normalize = (
-            self.get_normalize_transform()
-        )
-
+    def build_augmented_transform(self, augmentation_config):
+        normalize = self.get_normalize_transform()
         transform_list = []
 
-        # ----------------------------------------------------
-        # Horizontal flip
-        # ----------------------------------------------------
+        # Random Resized Crop or aspect-ratio-preserving resize
+        crop_config = augmentation_config.get(
+            "random_resized_crop"
+        )
 
-        if augmentation_config.get(
-            "horizontal_flip",
-            False,
-        ):
-
+        if crop_config:
             transform_list.append(
-                transforms.RandomHorizontalFlip(
-                    p=0.5
+                transforms.RandomResizedCrop(
+                    size=self.image_size,
+                    scale=tuple(crop_config.get("scale", (0.8, 1.0))),
+                    ratio=tuple(crop_config.get("ratio", (0.9, 1.1))),
                 )
             )
+        else:
+            transform_list.append(
+                ResizeWithPadding(size=self.image_size)
+            )
 
-        # ----------------------------------------------------
+        # Horizontal flip
+        if augmentation_config.get("horizontal_flip", False):
+            transform_list.append(
+                transforms.RandomHorizontalFlip(p=0.5)
+            )
+
         # Rotation
-        # ----------------------------------------------------
-
-        rotation = augmentation_config.get(
-            "rotation",
-            0,
-        )
+        rotation = augmentation_config.get("rotation", 0)
 
         if rotation > 0:
-
             transform_list.append(
-                transforms.RandomRotation(
-                    degrees=rotation
-                )
+                transforms.RandomRotation(degrees=rotation)
             )
 
-        # ----------------------------------------------------
         # Color jitter
-        # ----------------------------------------------------
+        color_jitter = augmentation_config.get("color_jitter")
 
-        color_jitter = augmentation_config.get(
-            "color_jitter",
-            False,
-        )
-
-        if color_jitter:
-
+        if isinstance(color_jitter, dict):
+            transform_list.append(
+                transforms.ColorJitter(
+                    brightness=color_jitter.get("brightness", 0),
+                    contrast=color_jitter.get("contrast", 0),
+                    saturation=color_jitter.get("saturation", 0),
+                    hue=color_jitter.get("hue", 0),
+                )
+            )
+        elif color_jitter:
             transform_list.append(
                 transforms.ColorJitter(
                     brightness=0.2,
@@ -346,48 +341,13 @@ class DataModule:
                 )
             )
 
-        # ----------------------------------------------------
-        # Random crop
-        # ----------------------------------------------------
+        # Tensor + ImageNet normalization
+        transform_list.extend([
+            transforms.ToTensor(),
+            normalize,
+        ])
 
-        random_crop = augmentation_config.get(
-            "random_crop",
-            False,
-        )
-
-        if random_crop:
-
-            transform_list.append(
-                transforms.RandomResizedCrop(
-                    size=self.image_size,
-                    scale=(0.8, 1.0),
-                    ratio=(0.9, 1.1),
-                )
-            )
-
-        else:
-
-            transform_list.append(
-                ResizeWithPadding(
-                    size=self.image_size
-                )
-            )
-
-        # ----------------------------------------------------
-        # Tensor + Normalize
-        # ----------------------------------------------------
-
-        transform_list.append(
-            transforms.ToTensor()
-        )
-
-        transform_list.append(
-            normalize
-        )
-
-        return transforms.Compose(
-            transform_list
-        )
+        return transforms.Compose(transform_list)
 
     # ========================================================
     # Build transforms

@@ -121,33 +121,25 @@ class ViTRunner:
         split_config = self.config["split"]
         data_config = self.experiment_config["data"]
 
-        image_size = data_config.get(
-            "image_size",
-            224,
-        )
+        image_size = data_config.get("image_size", 224)
 
-        data_module = DataModule(
+        if isinstance(image_size, int):
+            image_size = (image_size, image_size)
+        else:
+            image_size = tuple(image_size)
+
+        return DataModule(
             dataset=dataset,
             val_size=split_config["val_size"],
             test_size=split_config["test_size"],
-            batch_size=data_config.get(
-                "batch_size",
-                16,
-            ),
-            image_size=(
-                image_size,
-                image_size,
-            ),
+            batch_size=data_config.get("batch_size", 16),
+            image_size=image_size,
             random_state=self.seed,
-            num_workers=0,
+            num_workers=data_config.get("num_workers", 0),
         )
-
-        return data_module
-
     # ========================================================
     # Model
     # ========================================================
-
     def build_model(self):
 
         model_config = self.experiment_config["model"]
@@ -156,10 +148,13 @@ class ViTRunner:
             num_classes=8,
             strategy=model_config["strategy"],
             pretrained=model_config["pretrained"],
+            num_unfrozen_blocks=model_config.get(
+                "num_unfrozen_blocks",
+                0,
+            ),
         )
 
         return model
-
     # ========================================================
     # Experiment Information
     # ========================================================

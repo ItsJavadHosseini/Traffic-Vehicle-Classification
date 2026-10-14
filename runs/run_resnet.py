@@ -225,16 +225,22 @@ class ResNetExperimentRunner:
         # Transforms
         # ----------------------------------------------------
 
-        train_transform = (
-            get_resnet_train_transform(
-                image_size=image_size
-            )
+        # ----------------------------------------------------
+        # Transforms
+        # ----------------------------------------------------
+
+        augmentation_config = data_config.get(
+            "augmentation",
+            {},
         )
 
-        eval_transform = (
-            get_resnet_eval_transform(
-                image_size=image_size
-            )
+        train_transform = get_resnet_train_transform(
+            image_size=image_size,
+            augmentation=augmentation_config,
+        )
+
+        eval_transform = get_resnet_eval_transform(
+            image_size=image_size,
         )
 
         # ----------------------------------------------------
